@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Student Shop</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --primary: #212121;
+            --secondary: #757575;
+            --accent: #000000;
+            --highlight: #E3F2FD; /* Light Blue for active states */
+            --bg-color: #F5F7FA;
+            --card-bg: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background-color: #e0e0e0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--bg-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header */
+        header {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-name { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
+        .icon-btn { font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+        
+        .cart-icon { position: relative; }
+        .cart-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: var(--accent); color: white;
+            font-size: 0.7rem; width: 18px; height: 18px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+        }
+
+        /* Search Bar */
+        .search-container { padding: 10px 20px; background: var(--card-bg); }
+        .search-bar {
+            background: #F0F2F5; border-radius: 8px; padding: 10px 15px;
+            display: flex; align-items: center; color: var(--secondary);
+        }
+        .search-bar input {
+            border: none; background: transparent; margin-left: 10px;
+            width: 100%; outline: none; font-size: 0.95rem;
+        }
+
+        /* Categories */
+        .categories-section {
+            background: var(--card-bg); padding: 10px 0 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .cat-scroll {
+            display: flex; gap: 10px; overflow-x: auto;
+            padding-right: 20px; scrollbar-width: none;
+        }
+        .cat-chip {
+            padding: 8px 16px; border-radius: 20px; background: #F0F2F5;
+            color: var(--secondary); font-size: 0.9rem; white-space: nowrap;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .cat-chip.active {
+            background: var(--accent); color: white;
+        }
+
+        /* Filter Row */
+        .filter-row {
+            display: flex; gap: 10px; padding: 15px 20px;
+            background: var(--card-bg); margin-top: 10px;
+        }
+        .filter-btn {
+            flex: 1; padding: 8px; border: 1px solid #eee;
+            background: white; border-radius: 6px; font-size: 0.8rem;
+            cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        /* Active state for filters */
+        .filter-btn.active {
+            background: var(--accent); color: white; border-color: var(--accent);
+        }
+
+        /* Product Grid */
+        .products-header {
+            padding: 20px 20px 10px; font-size: 0.9rem; color: var(--secondary);
+            display: flex; justify-content: space-between;
+        }
+        .product-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px 80px;
+        }
+        .product-card {
+            background: var(--card-bg); border-radius: 12px; overflow: hidden;
+            display: flex; flex-direction: column;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .prod-img-box {
+            height: 140px; background: #ECEFF1;
+            display: flex; justify-content: center; align-items: center; position: relative;
+        }
+        .discount-tag {
+            position: absolute; top: 10px; left: 10px;
+            background: var(--accent); color: white; font-size: 0.7rem;
+            padding: 2px 6px; border-radius: 4px;
+        }
+        .prod-info { padding: 12px; display: flex; flex-direction: column; flex-grow: 1; }
+        .prod-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: var(--primary); }
+        .price-row { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+        .price { font-weight: 700; font-size: 1rem; }
+        
+        .empty-state {
+            grid-column: span 2; text-align: center; padding: 40px; color: #999;
+        }
+
+        /* Icons */
+        .placeholder-img { font-size: 2rem; }
+        .add-btn {
+            background: var(--accent); color: white; width: 24px; height: 24px;
+            border-radius: 50%; border: none; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <button class="icon-btn">☰</button>
+            <div class="brand-name">Student Shop</div>
+            <div class="icon-btn cart-icon">🛒<span class="cart-badge">3</span></div>
+        </header>
+
+        <div class="search-container">
+            <div class="search-bar">
+                <span>🔍</span>
+                <input type="text" id="searchInput" placeholder="Search (e.g. 'pen', 'book')...">
+            </div>
+        </div>
+
+        <div class="categories-section">
+            <div style="margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;">Categories</div>
+            <div class="cat-scroll" id="categoryContainer">
+                </div>
+        </div>
+
+        <div class="filter-row">
+            <button class="filter-btn" id="btnFilter" onclick="toggleFilter()">Filter: All</button>
+            <button class="filter-btn" id="btnSort" onclick="cycleSort()">Sort: Default</button>
+            <button class="filter-btn" id="btnPrice" onclick="togglePrice()">Price: Any</button>
+        </div>
+
+        <div class="products-header">
+            <span id="productCount">Loading...</span>
+        </div>
+
+        <div class="product-grid" id="productGrid">
+            </div>
+    </div>
+
+    <script>
+        // --- 1. DATA ---
+        const products = [
+            { id: 1, name: "Casio Scientific Calc", category: "Electronics", price: 34.99, rating: 4.8, discount: true, icon: "🖩" },
+            { id: 2, name: "A4 Spiral Notebooks", category: "Stationery", price: 12.99, rating: 4.5, discount: false, icon: "📓" },
+            { id: 3, name: "Physics Textbook", category: "Books", price: 55.00, rating: 4.2, discount: false, icon: "📚" },
+            { id: 4, name: "Laptop Stand", category: "Electronics", price: 22.50, rating: 4.6, discount: true, icon: "💻" },
+            { id: 5, name: "Gel Pens (Pack 10)", category: "Stationery", price: 8.99, rating: 4.7, discount: false, icon: "🖊️" },
+            { id: 6, name: "Graph Paper Pad", category: "Stationery", price: 5.50, rating: 4.9, discount: false, icon: "📉" },
+            { id: 7, name: "Wireless Mouse", category: "Electronics", price: 18.00, rating: 4.4, discount: true, icon: "🖱️" },
+            { id: 8, name: "History 101 Book", category: "Books", price: 40.00, rating: 4.1, discount: false, icon: "📖" },
+            { id: 9, name: "Sticky Notes", category: "Stationery", price: 3.50, rating: 4.8, discount: true, icon: "📝" },
+        ];
+
+        const categories = ["All", "Books", "Stationery", "Electronics"];
+
+        // --- 2. STATE MANAGEMENT ---
+        let appState = {
+            category: "All",
+            searchQuery: "",
+            sortMode: 0, // 0: Default, 1: Low-High, 2: High-Low
+            priceFilterActive: false, // false: Any, true: <$20
+            saleFilterActive: false   // false: All, true: On Sale
+        };
+
+        // --- 3. DOM ELEMENTS ---
+        const categoryContainer = document.getElementById('categoryContainer');
+        const productGrid = document.getElementById('productGrid');
+        const productCount = document.getElementById('productCount');
+        const searchInput = document.getElementById('searchInput');
+        
+        // Buttons
+        const btnSort = document.getElementById('btnSort');
+        const btnPrice = document.getElementById('btnPrice');
+        const btnFilter = document.getElementById('btnFilter');
+
+        // --- 4. CORE LOGIC ---
+
+        function updateView() {
+            // A. FILTERING
+            let filtered = products.filter(p => {
+                // Category Filter
+                const catMatch = appState.category === "All" || p.category === appState.category;
+                
+                // Search Filter
+                const searchMatch = p.name.toLowerCase().includes(appState.searchQuery) || 
+                                    p.category.toLowerCase().includes(appState.searchQuery);
+
+                // Price Filter (< $20)
+                const priceMatch = !appState.priceFilterActive || p.price < 20;
+
+                // Sale Filter
+                const saleMatch = !appState.saleFilterActive || p.discount === true;
+
+                return catMatch && searchMatch && priceMatch && saleMatch;
+            });
+
+            // B. SORTING
+            if (appState.sortMode === 1) {
+                filtered.sort((a, b) => a.price - b.price); // Low to High
+            } else if (appState.sortMode === 2) {
+                filtered.sort((a, b) => b.price - a.price); // High to Low
+            }
+
+            // C. RENDERING
+            renderGrid(filtered);
+            renderCategories();
+            updateButtonStyles();
+        }
+
+        // --- 5. RENDER FUNCTIONS ---
+
+        function renderCategories() {
+            categoryContainer.innerHTML = categories.map(cat => `
+                <div class="cat-chip ${cat === appState.category ? 'active' : ''}" 
+                     onclick="setCategory('${cat}')">
+                    ${cat}
+                </div>
+            `).join('');
+        }
+
+        function renderGrid(items) {
+            productCount.innerText = `${items.length} products found`;
+
+            if (items.length === 0) {
+                productGrid.innerHTML = `<div class="empty-state">No products match your criteria.</div>`;
+                return;
+            }
+
+            productGrid.innerHTML = items.map(product => `
+                <div class="product-card">
+                    <div class="prod-img-box">
+                        ${product.discount ? `<span class="discount-tag">-10%</span>` : ''}
+                        <div class="placeholder-img">${product.icon}</div>
+                    </div>
+                    <div class="prod-info">
+                        <div class="prod-title">${product.name}</div>
+                        <div style="font-size:0.75rem; color:#888;">${product.category}</div>
+                        <div class="price-row">
+                            <div class="price">$${product.price.toFixed(2)}</div>
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateButtonStyles() {
+            // Update Sort Button Text
+            const sortLabels = ["Sort: Default", "Sort: Low to High", "Sort: High to Low"];
+            btnSort.innerText = sortLabels[appState.sortMode];
+            btnSort.className = appState.sortMode !== 0 ? "filter-btn active" : "filter-btn";
+
+            // Update Price Button
+            btnPrice.innerText = appState.priceFilterActive ? "Price: <$20" : "Price: Any";
+            btnPrice.className = appState.priceFilterActive ? "filter-btn active" : "filter-btn";
+
+            // Update Filter Button
+            btnFilter.innerText = appState.saleFilterActive ? "Filter: Sale" : "Filter: All";
+            btnFilter.className = appState.saleFilterActive ? "filter-btn active" : "filter-btn";
+        }
+
+        // --- 6. EVENT HANDLERS ---
+
+        // Category Click
+        function setCategory(cat) {
+            appState.category = cat;
+            updateView();
+        }
+
+        // Search Typing
+        searchInput.addEventListener('input', (e) => {
+            appState.searchQuery = e.target.value.toLowerCase();
+            updateView();
+        });
+
+        // Cycle Sort (Default -> Low-High -> High-Low -> Default)
+        function cycleSort() {
+            appState.sortMode = (appState.sortMode + 1) % 3;
+            updateView();
+        }
+
+        // Toggle Price (<$20)
+        function togglePrice() {
+            appState.priceFilterActive = !appState.priceFilterActive;
+            updateView();
+        }
+
+        // Toggle Sale Filter
+        function toggleFilter() {
+            appState.saleFilterActive = !appState.saleFilterActive;
+            updateView();
+        }
+
+        // Initialize
+        updateView();
+
+    </script>
+</body>
+</html>
